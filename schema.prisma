@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String      @id @default(cuid())
+  name       String
+  email      String      @unique
+  password   String
+  role       String      @default("LAWYER") // LAWYER | COURT_OFFICIAL
+  createdAt  DateTime    @default(now())
+  judgments  Judgment[]
+  hearings   Hearing[]
+}
+
+model Judgment {
+  id          String    @id @default(cuid())
+  title       String
+  caseNumber  String?
+  court       String?
+  fileName    String?
+  fullText    String
+  summary     String
+  legalPoints String    // JSON string[]
+  citations   String    // JSON string[]
+  aiProvider  String    @default("extractive")
+  createdAt   DateTime  @default(now())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hearings    Hearing[]
+
+  @@index([userId, createdAt])
+}
+
+model Hearing {
+  id         String    @id @default(cuid())
+  caseNumber String
+  court      String
+  purpose    String
+  date       DateTime
+  judgmentId String?
+  judgment   Judgment? @relation(fields: [judgmentId], references: [id], onDelete: SetNull)
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
